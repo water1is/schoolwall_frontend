@@ -266,6 +266,7 @@ onMounted(() => {
     line-height: 1.6;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -333,13 +334,13 @@ onMounted(() => {
 .hot-post-item:last-child {
     border-bottom: none;
 }
-
 .hot-post-title {
     margin: 0 0 5px 0;
     font-size: 14px;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

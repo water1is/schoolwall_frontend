@@ -29,8 +29,10 @@
         </el-select>
       
         <el-select v-model="queryParams.sort" placeholder="默认排序" clearable style="width: 140px">
-          <el-option label="创建时间" value="createdAt" />
-          <el-option label="更新时间" value="updatedAt" />
+          <el-option label="创建时间" value="created_at" />
+          <el-option label="更新时间" value="updated_at" />
+          <el-option label="浏览量" value="view_count" />
+          <el-option label="评论数" value="comment_count" />
         </el-select>
         <el-select v-model="queryParams.direction" placeholder="排序方向" clearable style="width: 140px">
           <el-option label="升序" value="ASC" />
@@ -63,6 +65,8 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="viewCount" label="浏览量" width="80" />
+        <el-table-column prop="commentCount" label="评论数" width="80" />
         <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
