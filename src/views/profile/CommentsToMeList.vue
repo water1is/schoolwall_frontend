@@ -2,15 +2,27 @@
   <div class="comments-to-me-list">
     <el-skeleton :loading="loading" animated :count="3">
       <template #template>
-        <el-skeleton-item variant="p" style="width: 100%; height: 80px; margin-bottom: 15px;" />
+        <el-skeleton-item
+          variant="p"
+          style="width: 100%; height: 80px; margin-bottom: 15px"
+        />
       </template>
       <template #default>
         <div v-if="comments.length > 0">
-          <div v-for="comment in comments" :key="comment.id" class="comment-wrapper">
+          <div
+            v-for="comment in comments"
+            :key="comment.id"
+            class="comment-wrapper"
+          >
             <div class="comment-meta">
-              <span>评论于 {{ new Date(comment.createdAt).toLocaleString() }}</span>
-              <a @click="goToPost(comment.postId, comment.postSlug)" class="post-link">
-                帖子: {{ comment.postTitle || '帖子已删除' }}
+              <span
+                >评论于 {{ new Date(comment.createdAt).toLocaleString() }}</span
+              >
+              <a
+                @click="goToPost(comment.postId, comment.postSlug)"
+                class="post-link"
+              >
+                帖子: {{ comment.postTitle || "帖子已删除" }}
               </a>
             </div>
             <CommentItem :comment="comment" />
@@ -33,11 +45,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { getCommentsToMe } from '@/api/comments'; // 注意：此API函数需要您在后端实现
-import CommentItem from '@/components/CommentItem.vue';
-import { ElMessage } from 'element-plus';
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { getCommentsForMe } from "@/api/comments"; // 注意：此API函数需要您在后端实现
+import CommentItem from "@/components/CommentItem.vue";
+import { ElMessage } from "element-plus";
 
 const router = useRouter();
 const comments = ref([]);
@@ -51,14 +63,15 @@ const pagination = ref({
 const fetchComments = async () => {
   loading.value = true;
   try {
-    const response = await getCommentsToMe({
-      page: pagination.value.page - 1,
-      size: pagination.value.size,
+    const response = await getCommentsForMe();
+    response.data.content.forEach((comment) => {
+      comment.postTitle = comment.postTitle || "帖子已删除"; // 确保帖子标题存在
+      comment.parentCommentId = comment.parentCommentId || null; // 确保父评论存在
     });
     comments.value = response.data.content;
     pagination.value.totalElements = response.data.totalElements;
   } catch (error) {
-    ElMessage.error('获取评论列表失败');
+    ElMessage.error("获取评论列表失败");
   } finally {
     loading.value = false;
   }

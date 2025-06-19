@@ -34,6 +34,13 @@ export const getMyComments = (params) => {
 };
 
 /**
+ * 获取对当前用户的评论列表
+ * */
+export const getCommentsForMe = () => {
+  return apiClient.get("/comments/for-me");
+};
+
+/**
  * 删除指定评论
  * @param {string} commentId
  */
