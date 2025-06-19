@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { getPostEmotion, getCommentEmotion } from "@/api/emotion";
 
 const sentimentHelper = {
   /**
@@ -9,20 +9,19 @@ const sentimentHelper = {
    */
   async getSentimentEmoji(type, id) {
     try {
-      // 根据类型构建请求URL
-      const url = type === 'post' 
-        ? `/api/emotion/post/${id}`
-        : `/api/emotion/comment/${id}`
-      
-      // 发送请求获取情感数据
-      const response = await axios.get(url)
-      const sentiment = response.data.sentiment || response.data.emotion // 根据实际API响应调整
-      
+      // 根据类型调用不同的API函数
+      const response =
+        type === "post"
+          ? await getPostEmotion(id)
+          : await getCommentEmotion(id);
+
+      const sentiment = response.data.sentiment || response.data.emotion; // 根据实际API响应调整
+
       // 返回对应的emoji
-      return this.mapSentimentToEmoji(sentiment)
+      return this.mapSentimentToEmoji(sentiment);
     } catch (error) {
-      console.error(`获取${type}情感数据失败:`, error)
-      return '😐' // 默认返回中性表情
+      console.error(`获取${type}情感数据失败:`, error);
+      return "😐"; // 默认返回中性表情
     }
   },
 
@@ -32,21 +31,21 @@ const sentimentHelper = {
    * @returns {string} emoji表情
    */
   mapSentimentToEmoji(sentiment) {
-    if (!sentiment) return '😐'
-    
-    switch(sentiment.toLowerCase()) {
-      case 'positive':
-      case '积极':
-        return '😊'
-      case 'negative':
-      case '消极':
-        return '😞'
-      case 'neutral':
-      case '中性':
-      default:
-        return '😐'
-    }
-  }
-}
+    if (!sentiment) return "😐";
 
-export default sentimentHelper
+    switch (sentiment.toLowerCase()) {
+      case "positive":
+      case "积极":
+        return "😊";
+      case "negative":
+      case "消极":
+        return "😞";
+      case "neutral":
+      case "中性":
+      default:
+        return "😐";
+    }
+  },
+};
+
+export default sentimentHelper;

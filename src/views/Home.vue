@@ -4,7 +4,7 @@
         <div class="search-bar">
             <el-input v-model="searchKeyword" placeholder="搜索帖子..." @keyup.enter="handleSearch">
                 <template #append>
-                    <el-button :icon="Search" @click="handleSearch" />
+                    <el-button :icon="Search" @click="handleSearch">搜索</el-button>
                 </template>
             </el-input>
         </div>
@@ -61,139 +61,108 @@
     </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Search, Star, ChatDotRound, Clock, Plus } from '@element-plus/icons-vue'
-import axios from 'axios'
+<script>
+import PostList from '@/components/PostList.vue';
+import { getFeedPosts, getRecommendedPosts, getCategories } from '@/api/posts';
 
-const router = useRouter()
-
-// 搜索相关
-const searchKeyword = ref('')
-// 分类相关
-const selectedCategory = ref('')
-
-// 分页数据
-const pagination = ref({
-    page: 0,
-    size: 15,
-    totalElements: 0,
-    totalPages: 0
-})
-
-// 帖子数据
-const posts = ref([])
-const hotPosts = ref([])
-const categories = ref([])
-const loading = ref(true)
-
-// 格式化日期
-const formatDate = (dateString, short = false) => {
-    const date = new Date(dateString)
-    if (short) {
-        return date.toLocaleDateString('zh-CN')
+export default {
+  components: {
+    PostList
+  },
+  data() {
+    return {
+      searchKeyword: '',
+      selectedCategory: '',
+      pagination: {
+        page: 0,
+        size: 15,
+        totalElements: 0,
+        totalPages: 0
+      },
+      posts: [],
+      hotPosts: [],
+      categories: [],
+      loading: true,
+      currentPage: 0,
+      pageSize: 15,
+      sort: 'createdAt',
+      direction: 'DESC'
     }
-    return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    })
-}
-
-// 获取帖子列表
-const fetchPosts = async () => {
-    loading.value = true
-    try {
-        let response
-
-        response = await axios.get('/api/posts/feed', {
-            params: {
-                page: pagination.value.page-1,
-                size: pagination.value.size,
-                sort: 'createdAt',
-                direction: 'DESC'
-            }
-        })
-
-console.log(response.data)
-        posts.value = response.data.content
-        pagination.value = {
-            page: response.data.page,
-            size: response.data.size,
-            totalElements: response.data.totalElements,
-            totalPages: response.data.totalPages
+  },
+  methods: {
+    async fetchPosts() {
+      this.loading = true;
+      try {
+        const params = {
+          page: this.currentPage,
+          size: this.pageSize,
+          sort: this.sort,
+          direction: this.direction,
+        };
+        const response = await getFeedPosts(params);
+        this.posts = response.data.content;
+        this.totalPages = response.data.totalPages;
+      } catch (error) {
+        this.$message.error('获取帖子列表失败: ' + error.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchRecommended() {
+      try {
+        const response = await getRecommendedPosts({ limit: 5 });
+        this.hotPosts = response.data;
+      } catch (error) {
+        console.error('获取推荐帖子失败:', error);
+      }
+    },
+    async fetchCategories() {
+      try {
+        const response = await getCategories();
+        // 参照 PostEdit.vue 的实现，API返回的数据结构为 { categories: [...] }
+        // 模板中使用了 `category.name`，因此需要将 API 返回的 `displayName` 进行映射。
+        if (response.data && Array.isArray(response.data.categories)) {
+          this.categories = response.data.categories.map(item => ({
+            name: item.displayName,
+            code: item.code
+          }));
+        } else {
+          // 如果数据格式不符，确保 categories 是一个空数组以避免渲染错误
+          this.categories = [];
+          console.warn('获取到的分类数据格式不正确或为空:', response.data);
         }
-    } catch (error) {
-        ElMessage.error('获取帖子列表失败: ' + error.message)
-    } finally {
-        loading.value = false
+      } catch (error) {
+        this.categories = []; // 在出错时也清空
+        console.error('获取分类失败:', error);
+        this.$message.error('获取分类列表失败');
+      }
+    },
+    handleSearch() {
+      if (this.searchKeyword.trim()) {
+        this.$router.push(`/search/${encodeURIComponent(this.searchKeyword.trim())}`);
+      }
+    },
+    toggleCategory(category) {
+      if (category) {
+        this.$router.push(`/posts/category/${encodeURIComponent(category)}`);
+      }
+    },
+    handlePageChange() {
+      this.fetchPosts();
+    },
+    navigateToPost(post) {
+      this.$router.push({ name: 'PostDetail', params: { id: post.id, slug: post.slug } });
+    },
+    navigateToCreate() {
+      this.$router.push({ name: 'PostCreate' });
     }
+  },
+  mounted() {
+    this.fetchPosts();
+    this.fetchRecommended();
+    this.fetchCategories();
+  }
 }
-
-// 获取热门帖子
-const fetchHotPosts = async () => {
-    try {
-        const response = await axios.get('/api/posts/recommended', {
-            params: {
-                limit: 5
-            }
-        })
-        hotPosts.value = response.data
-    } catch (error) {
-        ElMessage.error('获取推荐帖子失败: ' + error.message)
-    }
-}
-
-// 获取分类列表
-const fetchCategories = async () => {
-    try {
-        const response = await axios.get('/api/posts/categories')
-        categories.value = response.data.categories.map(item => ({
-          name: item.displayName,
-          code: item.code
-        }))
-    } catch (error) {
-        ElMessage.error('获取分类列表失败: ' + error.message)
-    }
-}
-
-// 搜索处理
-const handleSearch = () => {
-    if (searchKeyword.value.trim()) {
-        router.push(`/search/${encodeURIComponent(searchKeyword.value.trim())}`)
-    }
-}
-//点击分类
-const toggleCategory = (category) => {
-    if (category) {
-        router.push(`/posts/category/${encodeURIComponent(category)}`)
-    }
-}
-// 分页变化
-const handlePageChange = () => {
-    fetchPosts()
-}
-
-// 跳转到帖子详情
-const navigateToPost = (post) => {
-    router.push({ name: 'PostDetail', params: {  id: post.id , slug: post.slug } })
-}
-
-// 跳转到创建帖子页面
-const navigateToCreate = () => {
-    router.push({ name: 'PostCreate' })
-}
-
-// 初始化加载数据
-onMounted(() => {
-    fetchPosts()
-    fetchHotPosts()
-    fetchCategories()
-})
 </script>
 
 <style scoped>

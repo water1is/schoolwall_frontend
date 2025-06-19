@@ -19,9 +19,8 @@
             v-for="post in posts"
             :key="post.id"
             class="post-item"
-            @click="$emit('post-click', post)"
           >
-            <div class="post-content">
+            <div class="post-content" @click="$emit('post-click', post)">
               <h3 class="post-title">{{ post.title }}</h3>
               <p class="post-summary">{{ post.summary }}</p>
               
@@ -51,9 +50,23 @@
               </div>
             </div>
             
-            <el-tag v-if="post.category" type="info" size="small" effect="plain">
-              {{ post.categoryDisplayName }}
-            </el-tag>
+            <div class="post-actions">
+              <el-tag v-if="post.category" type="info" size="small" effect="plain">
+                {{ post.categoryDisplayName }}
+              </el-tag>
+              
+              <el-dropdown v-if="showActions" @click.stop trigger="click">
+                <span class="action-trigger">
+                  <el-icon><MoreFilled /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :icon="Edit" @click="$emit('edit-post', post)">编辑</el-dropdown-item>
+                    <el-dropdown-item :icon="Delete" @click="$emit('delete-post', post)" class="delete-item" divided>删除</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </div>
           
           <!-- 分页 -->
@@ -77,7 +90,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Clock, Star, ChatDotRound, View } from '@element-plus/icons-vue'
+import { Clock, Star, ChatDotRound, View, MoreFilled, Edit, Delete } from '@element-plus/icons-vue'
 
 const props = defineProps({
   posts: {
@@ -100,59 +113,22 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  showActions: {
+    type: Boolean,
+    default: false
+  },
   emptyText: {
     type: String,
     default: '暂无帖子'
   }
 })
 
-const emit = defineEmits(['post-click', 'page-change'])
+const emit = defineEmits(['post-click', 'page-change', 'edit-post', 'delete-post'])
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
 }
-// let posts = ref([
-//   {
-//     id: 1,
-//     title: 'Vue3组合式API使用技巧',
-//     summary: '分享一些Vue3组合式API的实用技巧和最佳实践',
-//     category: '学术交流',
-//     likeCount: 24,
-//     commentCount: 8,
-//     createdAt: '2023-05-15T10:30:00',
-//     authorInfo: {
-//       username: '前端开发者',
-//       avatarUrl: 'https://example.com/avatar1.jpg'
-//     }
-//   },
-//   {
-//     id: 2,
-//     title: '校园美食推荐',
-//     summary: '分享学校周边值得一试的美食店铺',
-//     category: '饮食推荐',
-//     likeCount: 56,
-//     commentCount: 23,
-//     createdAt: '2023-05-10T14:15:00',
-//     authorInfo: {
-//       username: '美食达人',
-//       avatarUrl: 'https://example.com/avatar2.jpg'
-//     }
-//   },
-//   {
-//     id: 3,
-//     title: '春季校园摄影比赛',
-//     summary: '欢迎参加我们举办的春季校园摄影比赛',
-//     category: '社团活动',
-//     likeCount: 102,
-//     commentCount: 45,
-//     createdAt: '2023-04-28T09:00:00',
-//     authorInfo: {
-//       username: '摄影社',
-//       avatarUrl: 'https://example.com/avatar3.jpg'
-//     }
-//   }
-// ])
 </script>
 
 <style scoped>
@@ -180,6 +156,7 @@ const formatDate = (dateString) => {
 
 .post-content {
   flex: 1;
+  margin-right: 15px;
 }
 
 .post-title {
@@ -242,5 +219,42 @@ const formatDate = (dateString) => {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 50px; /* 保证在内容少时也有高度 */
+}
+
+.action-trigger {
+  margin-top: 10px;
+  padding: 5px;
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.action-trigger:hover {
+  background-color: #f2f2f2;
+}
+
+.action-trigger .el-icon {
+  font-size: 18px;
+  color: #909399;
+}
+
+.delete-item {
+  color: var(--el-color-danger);
+}
+.delete-item:hover {
+  color: var(--el-color-danger);
+  background-color: var(--el-color-danger-light-9);
 }
 </style>

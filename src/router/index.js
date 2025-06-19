@@ -1,40 +1,34 @@
 import { createRouter, createWebHistory } from "vue-router";
-import axios from "axios";
+import { getCurrentUser } from "@/api/users";
+
 const routes = [
   {
+    path: "/admin/login",
+    name: "AdminLogin",
+    component: () => import("@/views/admin/AdminLogin.vue"),
+    meta: { guestOnly: true },
+  },
+  {
     path: "/admin",
-    component: () => import("@/managements/Main.vue"),
+    component: () => import("@/layouts/AdminLayout.vue"),
+    redirect: "/admin/users", // 直接重定向到默认的管理页面
+    meta: { requiresAuth: true, requiresAdmin: true },
     children: [
+      {
+        path: "home",
+        redirect: { name: "UserManagement" }, // 默认重定向到用户管理
+      },
       {
         path: "users",
         name: "UserManagement",
-        component: () => import("@/managements/UserManagement.vue"),
-        meta: {
-          requiresAuth: true,
-          requiresAdmin: true,
-          title: "用户管理",
-        },
+        component: () => import("@/views/admin/UserManagement.vue"),
       },
       {
         path: "posts",
         name: "PostManagement",
-        component: () => import("@/managements/PostManagement.vue"),
-        meta: {
-          requiresAuth: true,
-          requiresAdmin: true,
-          title: "帖子管理",
-        },
+        component: () => import("@/views/admin/PostManagement.vue"),
       },
     ],
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: "管理员面板",
-    },
-  },
-  {
-    path: "/",
-    redirect: "/home",
   },
   {
     path: "/login",
@@ -50,7 +44,7 @@ const routes = [
   },
   {
     path: "/",
-    component: () => import("@/views/Main.vue"),
+    component: () => import("@/layouts/MainLayout.vue"), // 将所有主应用页面归于 MainLayout 之下
     children: [
       {
         path: "",
@@ -60,12 +54,12 @@ const routes = [
         path: "home",
         name: "Home",
         component: () => import("@/views/Home.vue"),
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, title: "首页" },
       },
       {
-        path: "user/me",
+        path: "profile/me",
         name: "UserCenter",
-        component: () => import("@/views/UserCenter.vue"),
+        component: () => import("@/views/profile/Profile.vue"), // 修正路径
         meta: {
           requiresAuth: true,
           title: "个人中心",
@@ -120,7 +114,7 @@ const routes = [
       {
         path: "user/posts",
         name: "UserPosts",
-        component: () => import("@/views/UserPosts.vue"),
+        component: () => import("@/views/user/UserPosts.vue"), // 修正路径
         meta: {
           requiresAuth: true,
           title: "我的帖子",
@@ -129,7 +123,7 @@ const routes = [
       {
         path: "user/comments",
         name: "UserComments",
-        component: () => import("@/views/UserComments.vue"),
+        component: () => import("@/views/user/UserComments.vue"), // 修正路径
         meta: {
           requiresAuth: true,
           title: "我的评论",
@@ -143,32 +137,6 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
 });
-// axios.interceptors.request.use(config => {
-//   // 如果路径以 /api 开头，则去掉
-//   if (config.url.startsWith('/api')) {
-//     config.url = config.url.replace('/api', '');
-//   }
-//   return config;
-// });
-// axios.interceptors.request.use(config => {
-//   config.baseURL = 'http://localhost:8080/';
-//   return config;
-// });
-// 添加axios响应拦截器
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (
-      error.response &&
-      (error.response.status === 302 ||
-        error.response.headers["content-type"]?.includes("text/html"))
-    ) {
-      // 遇到重定向或HTML响应，跳转到登录页
-      router.push("/login");
-    }
-    return Promise.reject(error);
-  }
-);
 
 router.beforeEach(async (to, from, next) => {
   // 处理guestOnly路由
@@ -179,19 +147,24 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查登录状态
   try {
-    const response = await axios.get("/api/users/me");
+    const response = await getCurrentUser();
     const user = response.data;
 
     // 检查管理员权限
     if (to.meta.requiresAdmin && user.role !== "ADMIN") {
-      next("/");
+      // 非管理员访问管理页面，跳转到管理登录页
+      next("/admin/login");
       return;
     }
 
     next();
   } catch (error) {
-    // 未登录跳转到登录页
-    if (to.meta.requiresAuth) {
+    // 未登录
+    if (to.meta.requiresAdmin) {
+      // 访问管理页面但未登录，跳转到管理登录页
+      next("/admin/login");
+    } else if (to.meta.requiresAuth) {
+      // 访问普通需登录页面但未登录，跳转到普通登录页
       next("/login");
     } else {
       next();

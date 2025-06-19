@@ -90,10 +90,10 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import sentimentHelper from '@/assets/sentimentHelper'
+import { createComment, getCommentReplies } from '@/api/comments'
 
 const props = defineProps({
   comment: {
@@ -178,7 +178,7 @@ const submitReply = async () => {
       finalContent = `@${props.comment.username} ${finalContent}`
     }
     
-    const res = await axios.post('/api/comments', {
+    const res = await createComment({
       content: finalContent,
       postId: props.comment.postId,
       parentCommentId: parentIdToUse,  // 始终指向顶级评论
@@ -213,11 +213,9 @@ const toggleReplies = async () => {
 // 获取评论的回复
 const fetchCommentReplies = async () => {
   try {
-    const response = await axios.get(`/api/comments/${props.comment.id}/replies`, {
-      params: {
-        page: repliesCurrentPage.value - 1,
-        size: repliesPageSize.value
-      }
+    const response = await getCommentReplies(props.comment.id, {
+      page: repliesCurrentPage.value - 1,
+      size: repliesPageSize.value
     });
 
     // 存储回复数据

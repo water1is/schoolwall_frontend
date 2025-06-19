@@ -1,6 +1,6 @@
 <template>
   <div class="category-posts-container">
-    <h1>{{ category }}分类的帖子</h1>
+    <h1>{{ categoryDisplayName || categoryCode }} 分类的帖子</h1>
     <PostList
       :posts="posts"
       :loading="loading"
@@ -12,15 +12,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostList from '@/components/PostList.vue'
-import axios from 'axios'
+import { getPostsByCategory, getCategories } from '@/api/posts'
 
 const route = useRoute()
 const router = useRouter()
 
-const category = ref(decodeURIComponent(route.params.category))
+const categoryCode = ref('')
+const categoryDisplayName = ref('')
 const posts = ref([])
 const loading = ref(true)
 
@@ -33,19 +34,35 @@ const pagination = ref({
 const fetchPosts = async () => {
   try {
     loading.value = true;
-    const response = await axios.get(`/api/posts/category/${category.value}`, {
-      params: {
-        page: pagination.value.page-1,
-        size: pagination.value.size
-      }
+    const response = await getPostsByCategory(categoryCode.value, {
+      page: pagination.value.page - 1,
+      size: pagination.value.size
     });
-    console.log(response.data);
     posts.value = response.data.content;
     pagination.value.totalElements = response.data.totalElements;
+    
+    // 如果通过 getCategories() 没能获取到名称，则从帖子信息中获取作为备用
+    if (!categoryDisplayName.value && posts.value.length > 0) {
+      categoryDisplayName.value = posts.value[0].categoryDisplayName;
+    }
   } catch (error) {
     console.error('获取分类帖子失败:', error);
   } finally {
     loading.value = false;
+  }
+};
+
+const fetchCategoryDetails = async (code) => {
+  try {
+    const response = await getCategories();
+    if (response.data && Array.isArray(response.data.categories)) {
+      const category = response.data.categories.find(cat => cat.code === code);
+      if (category) {
+        categoryDisplayName.value = category.displayName;
+      }
+    }
+  } catch (error) {
+    console.error('获取分类详情失败:', error);
   }
 };
 
@@ -59,8 +76,11 @@ const handlePageChange = (page) => {
 }
 
 watch(() => route.params, (newParams) => {
-  category.value = decodeURIComponent(newParams.category)
+  const newCode = decodeURIComponent(newParams.category)
+  categoryCode.value = newCode
+  categoryDisplayName.value = '' // 切换分类时重置
   pagination.value.page = 1;
+  fetchCategoryDetails(newCode);
   fetchPosts()
 }, { immediate: true })
 </script>

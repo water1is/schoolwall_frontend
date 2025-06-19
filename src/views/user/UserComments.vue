@@ -61,7 +61,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
+import { getMyComments, deleteComment } from '@/api/comments'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -82,11 +82,9 @@ const formatDate = (dateString) => {
 const fetchUserComments = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/api/comments/me', {
-      params: {
+    const response = await getMyComments({
         page: currentPage.value - 1,
         size: pageSize.value
-      }
     })
     console.log(response.data)
     userComments.value = response.data.content.map(comment => ({
@@ -115,7 +113,7 @@ const handleDelete = async (commentId) => {
     if (commentIndex !== -1) {
       userComments.value[commentIndex].deleting = true
       
-      await axios.delete(`/api/comments/${commentId}`)
+      await deleteComment(commentId)
       
       ElMessage.success('评论删除成功')
       // 标记为已删除而不是从列表中移除，因为可能还有分页

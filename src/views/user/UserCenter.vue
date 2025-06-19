@@ -13,15 +13,6 @@
           >
             删除账户
           </el-button>
-          <el-button
-            v-if="userData.role === 'ADMIN'"
-            type="primary"
-            @click="goToAdminPanel"
-            plain
-            :icon="Setting"
-          >
-            管理员面板
-          </el-button>
         </div>
       </template>
 
@@ -141,7 +132,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Key, Delete, Picture, Setting } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { getCurrentUser, updateUserProfile, updatePassword, deleteCurrentUser } from '@/api/users'
 
 // 用户数据
 const userData = ref({
@@ -206,15 +197,10 @@ const passwordRules = reactive({
 
 const router = useRouter()
 
-// 跳转到管理员面板
-const goToAdminPanel = () => {
-  router.push('/admin')
-}
-
 // 获取用户信息
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get('/api/users/me')
+    const response = await getCurrentUser()
     userData.value = response.data
     Object.assign(editForm, {
       username: response.data.username,
@@ -245,7 +231,7 @@ const cancelEditing = () => {
 // 保存编辑
 const saveProfile = async () => {
   try {
-    const response = await axios.put('/api/users/me', editForm)
+    const response = await updateUserProfile(editForm)
     userData.value = response.data
     isEditing.value = false
     ElMessage.success('资料更新成功')
@@ -258,12 +244,10 @@ const saveProfile = async () => {
 const changePassword = async () => {
   try {
     await passwordFormRef.value.validate()
-     console.log(passwordForm.oldPassword)   
-    await axios.put('/api/users/me/password', {
+    await updatePassword({
       oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword
     })
-    console.log(passwordForm.oldPassword)    
     ElMessage.success('密码修改成功')
     showPasswordDialog.value = false
     passwordForm.oldPassword = ''
@@ -279,7 +263,7 @@ const changePassword = async () => {
 // 更新头像
 const updateAvatar = async () => {
   try {
-    const response = await axios.put('/api/users/me', {
+    const response = await updateUserProfile({
       avatarUrl: avatarUrl.value
     })
     userData.value = response.data
@@ -303,11 +287,7 @@ const deleteAccount = async () => {
       }
     )
     
-    await axios.delete('/api/users/me', {
-      data: {
-        password: deleteForm.password
-      }
-    })
+    await deleteCurrentUser(deleteForm.password)
     
     ElMessage.success('账户已删除')
     // 这里应该跳转到登录页或首页

@@ -34,14 +34,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { getMyPosts, deletePost } from '@/api/posts'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const posts = ref([])
 
 const fetchPosts = async () => {
   try {
-    const response = await axios.get('/api/posts/me')
+    const response = await getMyPosts()
     console.log(response.data)
     posts.value = response.data
   } catch (error) {
@@ -70,7 +71,7 @@ const handleDelete = async (post) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await axios.delete(`/api/posts/${post.id}`)
+    await deletePost(post.id)
     ElMessage.success('删除成功')
     fetchPosts() // 刷新列表
   } catch (error) {

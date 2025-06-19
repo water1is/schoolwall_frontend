@@ -34,7 +34,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { register } from '@/api/auth'
 
 
 const router = useRouter()
@@ -95,11 +95,11 @@ const onSubmit = async () => {
     if (!valid) return
     try {
       loading.value = true
-      const response = await axios.post('/api/auth/register', {
+      const response = await register({
         username: form.value.username,
         email: form.value.email,
         password: form.value.password
-      }, { withCredentials: true })
+      })
       
       if (response.status === 201) {
         ElMessage.success('注册成功')
@@ -107,10 +107,10 @@ const onSubmit = async () => {
       }
     } catch (error) {
       console.error('注册错误:', error)
-      if (error.response?.status === 400) {
+      if (error.response?.status === 409) { // 假设后端对已存在的用户返回 409 Conflict
         ElMessage.error('用户名或邮箱已存在')
       } else {
-        ElMessage.error('注册失败')
+        ElMessage.error(error.response?.data?.message || '注册失败')
       }
     } finally {
       loading.value = false

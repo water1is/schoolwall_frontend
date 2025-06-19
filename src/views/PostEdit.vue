@@ -46,9 +46,9 @@
 </template>
 
 <script>
-import { marked } from 'marked'
-import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { marked } from 'marked';
+import { getPostById, createPost, updatePost, getCategories } from '@/api/posts';
+import { ElMessage } from 'element-plus';
 
 // 发布状态常量
 const POST_STATUS = {
@@ -99,7 +99,7 @@ export default {
   methods: {
     async fetchCategories() {
       try {
-        const { data } = await axios.get('/api/posts/categories')
+        const { data } = await getCategories()
         this.categories = data.categories.map(item => ({
           name: item.displayName,
           code: item.code
@@ -112,7 +112,7 @@ export default {
 
     async fetchPost(postId) {
       try {
-        const { data } = await axios.get(`/api/posts/${postId}`)
+        const { data } = await getPostById(postId)
         this.form = {
           id: data.id,
           title: data.title,
@@ -155,12 +155,12 @@ export default {
 
         if (this.isNewPost) {
           // 新建帖子
-          response = await axios.post('/api/posts', this.form)
+          response = await createPost(this.form)
           this.form.id = response.data.id
           ElMessage.success(action === ACTION_TYPE.PUBLISH ? '发布成功' : '草稿保存成功')
         } else {
           // 更新帖子
-          response = await axios.put(`/api/posts/${this.form.id}`, this.form)
+          response = await updatePost(this.form.id, this.form)
           ElMessage.success(action === ACTION_TYPE.PUBLISH ? '发布成功' : '更新成功')
         }
 

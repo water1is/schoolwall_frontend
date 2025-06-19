@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { getAdminUsers, updateUserStatus, deleteUserByAdmin } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
@@ -81,7 +81,7 @@ export default {
     async fetchUsers() {
       this.loading = true
       try {
-        const response = await axios.get('/api/admin/users')
+        const response = await getAdminUsers()
         this.users = response.data.content || response.data
         console.log(this.users)
       } catch (error) {
@@ -99,10 +99,7 @@ export default {
     async toggleUserStatus(user) {
   try {
     const targetStatus = user.isEnabled; // 获取目标状态
-    const response = await axios.put(
-      `/api/admin/users/${user.id}/status`,
-      { enabled: targetStatus } // 请求体
-    );
+    const response = await updateUserStatus(user.id, targetStatus);
     
     console.log(response.data);
     user.isEnabled = response.data.isEnabled; // 更新状态
@@ -128,7 +125,7 @@ export default {
         }
       ).then(async () => {
         try {
-          await axios.delete(`/api/admin/users/${user.id}`)
+          await deleteUserByAdmin(user.id)
           ElMessage.success('用户删除成功')
           this.fetchUsers() // 刷新列表
         } catch (error) {

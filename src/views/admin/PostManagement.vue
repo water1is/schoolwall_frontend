@@ -125,7 +125,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { getAdminPosts, getAdminPostCategories, deletePostByAdmin } from '@/api/admin'
 import { ElMessage } from 'element-plus'
 import { marked } from 'marked'
 
@@ -170,7 +170,7 @@ export default {
   methods: {
     async fetchCategories() {
       try {
-        const response = await axios.get('/api/admin/posts/categories')
+        const response = await getAdminPostCategories()
         this.categories = response.data
       } catch (error) {
         ElMessage.error('获取分类列表失败: ' + error.message)
@@ -184,7 +184,7 @@ export default {
         const params = Object.fromEntries(
           Object.entries(this.queryParams).filter(([_, v]) => v !== '')
         )
-        const response = await axios.get('/api/admin/posts', { params })
+        const response = await getAdminPosts(params)
         this.posts = response.data.content
         this.total = response.data.totalElements
       } catch (error) {
@@ -243,7 +243,7 @@ export default {
     
     async handleDelete(row) {
       try {
-        await axios.delete(`/api/admin/posts/${row.id}`)
+        await deletePostByAdmin(row.id)
         ElMessage.success('删除成功')
         this.fetchPosts()
       } catch (error) {
