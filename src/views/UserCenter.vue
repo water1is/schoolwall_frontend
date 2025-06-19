@@ -5,12 +5,22 @@
         <div class="card-header">
           <h2>个人资料</h2>
           <el-button
+           v-if="userData.role !== 'ADMIN'"
             type="danger"
             @click="showDeleteDialog = true"
             plain
             :icon="Delete"
           >
             删除账户
+          </el-button>
+          <el-button
+            v-if="userData.role === 'ADMIN'"
+            type="primary"
+            @click="goToAdminPanel"
+            plain
+            :icon="Setting"
+          >
+            管理员面板
           </el-button>
         </div>
       </template>
@@ -128,8 +138,9 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Key, Delete, Picture } from '@element-plus/icons-vue'
+import { Edit, Key, Delete, Picture, Setting } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 // 用户数据
@@ -192,6 +203,13 @@ const passwordRules = reactive({
     }
   ]
 })
+
+const router = useRouter()
+
+// 跳转到管理员面板
+const goToAdminPanel = () => {
+  router.push('/admin')
+}
 
 // 获取用户信息
 const fetchUserProfile = async () => {

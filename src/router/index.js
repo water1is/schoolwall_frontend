@@ -2,6 +2,37 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 const routes = [
   {
+    path: '/admin',
+    component: () => import('@/managements/Main.vue'),
+    children: [
+      {
+        path: 'users',
+        name: 'UserManagement',
+        component: () => import('@/managements/UserManagement.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true,
+          title: '用户管理'
+        }
+      },
+      {
+        path: 'posts',
+        name: 'PostManagement',
+        component: () => import('@/managements/PostManagement.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true,
+          title: '帖子管理'
+        }
+      }
+    ],
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: '管理员面板'
+    }
+  },
+  {
     path: '/',
     redirect: '/home'
   },
@@ -133,13 +164,32 @@ axios.interceptors.response.use(
   }
 );
 
-router.beforeEach((to, from, next) => {
-  // 不再主动检查登录状态
+router.beforeEach(async (to, from, next) => {
+  // 处理guestOnly路由
   if (to.meta.guestOnly) {
-    // 仅处理guestOnly路由
     next();
-  } else {
+    return;
+  }
+  
+  // 检查登录状态
+  try {
+    const response = await axios.get('/api/users/me');
+    const user = response.data;
+    
+    // 检查管理员权限
+    if (to.meta.requiresAdmin && user.role !== 'ADMIN') {
+      next('/');
+      return;
+    }
+    
     next();
+  } catch (error) {
+    // 未登录跳转到登录页
+    if (to.meta.requiresAuth) {
+      next('/login');
+    } else {
+      next();
+    }
   }
 })
 

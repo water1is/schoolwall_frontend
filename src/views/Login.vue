@@ -1,5 +1,8 @@
 <template>
   <div class="login-page">
+    <div class="login-logo">
+      <img src="/image.png" alt="School Logo">
+    </div>
     <el-card class="login-card">
       <div class="login-title">
         <el-icon style="vertical-align: middle; margin-right: 8px;">
@@ -88,8 +91,19 @@ const onSubmit = async () => {
   min-height: 100vh;
   background: #f7f8fa;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.login-logo {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.login-logo img {
+  max-width: 200px;
+  height: auto;
 }
 
 .login-card {

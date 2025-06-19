@@ -2,7 +2,15 @@
   <el-container style="min-height: 100vh;">
     <el-header height="60px" class="main-header">
       <div class="header-left">
-        <div class="logo">学声</div>
+        <div 
+          class="logo" 
+          @click="$router.push('/home')"
+          style="cursor: pointer; transition: transform 0.3s ease;"
+          @mouseover="$event.currentTarget.style.transform = 'scale(1.1)'"
+          @mouseout="$event.currentTarget.style.transform = 'scale(1)'"
+        >
+          学声
+        </div>
         <el-breadcrumb separator="/" class="breadcrumb">
           <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>{{ $route.meta.title || '' }}</el-breadcrumb-item>

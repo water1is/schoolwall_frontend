@@ -3,11 +3,10 @@
     <div class="comment-header">
       <div style="display: flex; align-items: center;">
         <img 
-          v-if="comment.userAvatarUrl" 
-          :src="comment.userAvatarUrl" 
+          :src="comment.userAvatarUrl || 'https://tse3-mm.cn.bing.net/th/id/OIP-C.o3HTtaf_jy2WjeomIC5y1QAAAA?r=0&rs=1&pid=ImgDetMain'"
           class="comment-avatar"
           alt="用户头像"
-          style="width: 40px; height: 40px; border-radius: 30%; object-fit: cover; margin-right: 5px;"
+          style="width: 40px; height: 40px; border-radius: 30%; object-fit: cover; margin-right: 5px; background-color: #f5f5f5;"
         />
         <span class="comment-author" style="margin-right: 5px;">{{ comment.username || '匿名用户' }}</span>
         <span v-if="comment.emoji" class="sentiment-emoji">{{ comment.emoji }}</span>
