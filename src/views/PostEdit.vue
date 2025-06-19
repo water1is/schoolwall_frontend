@@ -31,7 +31,7 @@
       </el-form-item>
 
       <el-form-item>
-        <template v-if="!form.id">
+        <template v-if="form.status=='DRAFT'">
           <el-button type="primary" @click="submitPost('save')">
             保存草稿
           </el-button>
@@ -69,7 +69,7 @@ export default {
         content: '',
         category: '',
         tags: '',
-        status: 'DRAFT'
+        status: ''
       },
       categories: []
     }
@@ -139,14 +139,17 @@ export default {
         const { status, ...postData } = this.form;
 
         // 区分新建和编辑模式
-        if (!this.form.id) {
+        if (this.form.status == 'DRAFT') {
+
           // 新建帖子逻辑
           const response = await axios.post('/api/posts', postData);
           this.form.id = response.data.id;
 
           // 根据操作类型处理发布逻辑
           if (action === 'publish') {
-            await axios.put(`/api/posts/${this.form.id}/publish`);
+
+            const publishResponse = await axios.put(`/api/posts/${this.form.id}/publish`);
+            console.log(publishResponse)
             ElMessage.success('发布成功');
           } else {
             ElMessage.success('保存草稿成功');

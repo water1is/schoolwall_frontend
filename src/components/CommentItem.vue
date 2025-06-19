@@ -1,14 +1,17 @@
 <template>
   <div class="comment" :class="{ 'comment-deleted': comment.isDeleted }">
     <div class="comment-header">
-      <img 
-        v-if="comment.userAvatarUrl" 
-        :src="comment.userAvatarUrl" 
-        class="comment-avatar"
-        alt="用户头像"
-        style="width: 40px; height: 40px; border-radius: 30%; object-fit: cover; margin-right: 10px;"
-      />
-      <span class="comment-author">{{ comment.username || '匿名用户' }}</span>
+      <div style="display: flex; align-items: center;">
+        <img 
+          v-if="comment.userAvatarUrl" 
+          :src="comment.userAvatarUrl" 
+          class="comment-avatar"
+          alt="用户头像"
+          style="width: 40px; height: 40px; border-radius: 30%; object-fit: cover; margin-right: 5px;"
+        />
+        <span class="comment-author" style="margin-right: 5px;">{{ comment.username || '匿名用户' }}</span>
+        <span v-if="comment.emoji" class="sentiment-emoji">{{ comment.emoji }}</span>
+      </div>
       <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
     </div>
     
@@ -91,6 +94,7 @@
 import axios from 'axios'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import sentimentHelper from '@/assets/sentimentHelper'
 
 const props = defineProps({
   comment: {
@@ -215,20 +219,33 @@ const fetchCommentReplies = async () => {
         page: repliesCurrentPage.value - 1,
         size: repliesPageSize.value
       }
-    })
-    replies.value = response.data.content
+    });
+
+    // 存储回复数据
+    replies.value = response.data.content;
     repliesPageInfo.value = {
       page: response.data.page,
       size: response.data.size,
       totalElements: response.data.totalElements,
       totalPages: response.data.totalPages,
       last: response.data.last
+    };
+
+    // 为每条回复获取情绪emoji
+    for (const reply of replies.value) {
+      try {
+        reply.emoji = await sentimentHelper.getSentimentEmoji('comment', reply.id);
+      } catch (error) {
+        console.error(`获取回复 ${reply.id} 的情感emoji失败:`, error);
+        reply.emoji = '😐'; // 默认表情
+      }
     }
+
   } catch (error) {
-    ElMessage.error('获取回复失败')
-    console.error(error)
+    ElMessage.error('获取回复失败');
+    console.error(error);
   }
-}
+};
 fetchCommentReplies();
 
 // 处理嵌套回复

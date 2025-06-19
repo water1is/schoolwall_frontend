@@ -2,7 +2,10 @@
   <div class="post-container">
     <!-- 帖子详情部分 -->
     <div class="post-detail">
-      <h1>{{ post.title }}</h1>
+      <h1>
+  {{ post.title }}
+  <span v-if="post.emoji" class="sentiment-emoji">{{ post.emoji }}</span>
+</h1>
       <div class="post-meta">
         <span>作者: {{ post.authorUsername }}</span>
         <span>分类: {{ post.categoryDisplayName }}</span>
@@ -70,6 +73,7 @@
 </template>
 
 <script setup>
+import sentimentHelper from '@/assets/sentimentHelper'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -96,7 +100,8 @@ const post = ref({
   commentCount: 0,
   isTop: false,
   isRecommended: false,
-  publishedAt: ''
+  publishedAt: '',
+  sentiment: ''
 })
 
 // 评论数据
@@ -138,6 +143,7 @@ const fetchPostDetail = async () => {
   try {
     const response = await axios.get(`/api/posts/slug/${route.params.slug}`)
     post.value = response.data
+    post.value.emoji = await sentimentHelper.getSentimentEmoji('post', route.params.id)
     // 获取顶级评论
     await fetchTopLevelComments()
   } catch (error) {
@@ -146,7 +152,6 @@ const fetchPostDetail = async () => {
   }
 }
 
-// 获取顶级评论
 const fetchTopLevelComments = async () => {
   try {
     const response = await axios.get(`/api/comments/post/${postId.value}/toplevel`, {
@@ -161,6 +166,16 @@ const fetchTopLevelComments = async () => {
     ElMessage.error('获取评论失败')
     console.error(error)
   }
+  for (const comment of topLevelComments.value.content) {
+      try {
+        comment.emoji = await sentimentHelper.getSentimentEmoji('comment', comment.id);
+      } catch (error) {
+        console.error(`获取评论 ${comment.id} 的情感emoji失败:`, error);
+        comment.emoji = '😐'; // 默认表情
+      }
+    }
+
+    console.log('带emoji的评论数据:', topLevelComments.value);
 }
 
 // 提交评论
@@ -269,5 +284,10 @@ onMounted(() => {
 .el-pagination {
   margin-top: 20px;
   justify-content: center;
+}
+.sentiment-emoji {
+  margin-left: 8px;
+  font-size: 1.2em;
+  vertical-align: middle;
 }
 </style>
