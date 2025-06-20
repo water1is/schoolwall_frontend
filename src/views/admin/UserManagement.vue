@@ -1,6 +1,6 @@
 <template>
   <div class="user-management-container">
-    <el-card >
+    <el-card>
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
@@ -12,7 +12,6 @@
       <el-table
         :data="users"
         v-loading="loading"
-        
         stripe
         border
         height="calc(100vh - 220px)"
@@ -63,81 +62,91 @@
 </template>
 
 <script>
-import { getAdminUsers, updateUserStatus, deleteUserByAdmin } from '@/api/admin'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  getAdminUsers,
+  updateUserStatus,
+  deleteUserByAdmin,
+} from "@/api/admin";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
-  name: 'UserManagement',
+  name: "UserManagement",
   data() {
     return {
       loading: false,
-      users: []
-    }
+      users: [],
+    };
   },
   created() {
-    this.fetchUsers()
+    this.fetchUsers();
   },
   methods: {
     async fetchUsers() {
-      this.loading = true
+      this.loading = true;
       try {
-        const response = await getAdminUsers()
-        this.users = response.data.content || response.data
-        console.log(this.users)
+        const response = await getAdminUsers();
+        this.users = response.data.content || response.data;
+        console.log(this.users);
       } catch (error) {
-        ElMessage.error('获取用户列表失败: ' + error.message)
-        console.error(error)
+        ElMessage.error("获取用户列表失败: " + error.message);
+        console.error(error);
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
-    
+
     formatDate(dateString) {
-      return new Date(dateString).toLocaleString()
+      return new Date(dateString).toLocaleString();
     },
-    
+
     async toggleUserStatus(user) {
-  try {
-    const targetStatus = user.isEnabled; // 获取目标状态
-    const response = await updateUserStatus(user.id, targetStatus);
-    
-    console.log(response.data);
-    user.isEnabled = response.data.isEnabled; // 更新状态
-    
-    // 修正了这里的显示逻辑
-    ElMessage.success(`用户已${user.isEnabled ? '启用' : '禁用'}`);
-  } catch (error) {
-    // 回滚状态
-    user.isEnabled = !user.isEnabled;
-    ElMessage.error('切换用户状态失败: ' + error.message);
-    console.error(error);
-  }
-},
-    
+      try {
+        const targetStatus = user.isEnabled; // 获取目标状态
+        const response = await updateUserStatus(user.id, targetStatus);
+
+        console.log(response.data);
+        // 修复：后端返回的状态字段是 `enabled`，而不是 `isEnabled`。
+        // 直接使用后端返回的权威状态更新前端模型。
+        if (response.data && typeof response.data.enabled !== "undefined") {
+          user.isEnabled = response.data.enabled;
+        }
+
+        // 修正了这里的显示逻辑
+        ElMessage.success(`用户已${user.isEnabled ? "启用" : "禁用"}`);
+      } catch (error) {
+        // 回滚状态
+        user.isEnabled = !user.isEnabled;
+        ElMessage.error("切换用户状态失败: " + error.message);
+        console.error(error);
+      }
+    },
+
     confirmDelete(user) {
       ElMessageBox.confirm(
         `确定要永久删除用户 "${user.username}" 吗? 此操作不可撤销。`,
-        '警告',
+        "警告",
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
         }
-      ).then(async () => {
-        try {
-          await deleteUserByAdmin(user.id)
-          ElMessage.success('用户删除成功')
-          this.fetchUsers() // 刷新列表
-        } catch (error) {
-          ElMessage.error('删除用户失败: ' + error.message)
-          console.error(error)
-        }
-      }).catch(() => {
-        // 用户取消删除
-      })
-    }
-  }
-}
+      )
+        .then(async () => {
+          try {
+            await deleteUserByAdmin(user.id);
+            ElMessage.success("用户删除成功");
+            this.fetchUsers(); // 刷新列表
+          } catch (error) {
+            ElMessage.error("删除用户失败: " + error.message);
+            console.error(error);
+          }
+        })
+        .catch(() => {
+          // 用户取消删除
+        });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -145,7 +154,6 @@ export default {
   padding: 20px;
   height: 100%;
 }
-
 
 .card-header {
   display: flex;

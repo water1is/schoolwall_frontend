@@ -57,6 +57,14 @@ export const updatePost = (postId, postData) => {
 };
 
 /**
+ * 删除帖子
+ * @param {string} postId
+ */
+export const deletePost = (postId) => {
+  return apiClient.delete(`/posts/${postId}`);
+};
+
+/**
  * 获取指定用户的帖子列表
  * @param {string} userId
  * @param {object} params - 分页参数 { page, size }
