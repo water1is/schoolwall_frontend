@@ -85,7 +85,9 @@ export default {
       this.loading = true;
       try {
         const response = await getAdminUsers();
-        this.users = response.data.content || response.data;
+        const allUsers = response.data.content || response.data;
+        // 根据 is_locked 字段过滤用户，只显示未被删除的用户
+        this.users = allUsers.filter((user) => !user.isLocked);
         console.log(this.users);
       } catch (error) {
         ElMessage.error("获取用户列表失败: " + error.message);

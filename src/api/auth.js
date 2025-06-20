@@ -33,5 +33,5 @@ export const logout = () => {
 };
 
 export const register = (userData) => {
-  return apiClient.post("/register", userData);
+  return apiClient.post("/auth/register", userData);
 };
